@@ -1,0 +1,140 @@
+SEED: 3407
+OUTPUT_DIR : "checkpoints/vs_transformer/xe_gpscae_mma_eval"
+
+####################################### DATASETS #######################################
+DATASETS:
+  TRAIN: 'MSCoCoVSDataset'
+  VAL: 'MSCoCoVSDataset'
+  TEST: 'MSCoCoVSDataset'
+
+###################################### DATALOADER ######################################
+DATALOADER:
+  TRAIN_BATCH_SIZE: 10
+  TEST_BATCH_SIZE: 32
+  NUM_WORKERS: 6
+  GRID_FEATS_PATH: 'datasets/mscoco_dataset/features/txt_ctx.hdf5'
+  # REGION_FEATS_PATH: 'datasets/mscoco_dataset/features/COCO2014_FR_REGION.hdf5'
+  REGION_FEATS_PATH: 'datasets/mscoco_dataset/features/COCO2014_VinVL.hdf5'
+  # GV_FEAT_FILE: 'datasets/mscoco_dataset/features/COCO2014_ViT-L-14_GLOBAL.hdf5'
+  GV_FEAT_FILE: 'datasets/mscoco_dataset/features/COCO2014_ViT-B-32_GLOBAL.hdf5'
+  ANNO_FOLDER:  'datasets/mscoco_dataset'
+  SEQ_PER_SAMPLE: 5
+  MAX_FEAT_NUM: 50
+  K_SAMPLE: 12
+
+######################################### Engine #########################################
+ENGINE:
+  NAME: 'Ensembler'
+
+######################################### MODEL #########################################
+MODEL:
+  VOCAB_SIZE: 10200 # include <BOS>/<EOS>
+  META_ARCHITECTURE: 'TransformerEncoderDecoder'
+  ENCODER: 'GPSCAEncoder'
+  ENCODER_DIM: 512
+  DECODER: 'MMADecoder'
+  DECODER_DIM: 512
+  PREDICTOR: 'BasePredictor'
+  PRED_DROPOUT: 0.1
+  MAX_SEQ_LEN: 20
+
+  ENSEMBLE_WEIGHTS: [
+    # 'checkpoints/vs_transformer/xe_frcnn_gpscae_mma_rl/model_Epoch_00014_Iter_0158591.pth',
+    # 'checkpoints/vs_transformer/xe_gpscae_mma_3407/model_Epoch_00012_Iter_0135935.pth',
+    # 'checkpoints/vs_transformer/xe_gpscae_mma_1998/model_Epoch_00010_Iter_0113279.pth',
+    # 'checkpoints/vs_transformer/xe_gpscae_mma_1234/model_Epoch_00016_Iter_0181247.pth',
+    # 'checkpoints/vs_transformer/xe_gpscae_mma_211314/model_Epoch_00010_Iter_0113279.pth',
+    'checkpoints/vs_transformer/xe_gpscae_mma_rl_1234/model_Epoch_00012_Iter_0135935.pth',
+    'checkpoints/vs_transformer/xe_gpscae_mma_rl_1998/model_Epoch_00008_Iter_0090623.pth',
+    'checkpoints/vs_transformer/xe_gpscae_mma_rl_3407/model_Epoch_00013_Iter_0147263.pth',
+    'checkpoints/vs_transformer/xe_gpscae_mma_rl_211314_3407/model_Epoch_00008_Iter_0090623.pth'
+    ]
+  MODEL_WEIGHTS: [1,1,1,1]
+  # MODEL_WEIGHTS: [1]
+
+#################################### Token embedding ####################################
+  TOKEN_EMBED:
+    NAME: 'TokenBaseEmbedding'
+    DIM: 512
+    ACTIVATION: 'none'
+    USE_NORM: True
+    DROPOUT: 0.1
+    POSITION: 'SinusoidEncoding'
+
+#################################### Visual embedding ####################################
+  VISUAL_EMBED:
+    NAME: 'VisualContextEmbedding'
+    IN_DIM: 2048
+    OUT_DIM: 512
+    ACTIVATION: 'relu'
+    USE_NORM: True
+    DROPOUT: 0.1
+
+####################################### BERT ############################################
+  BERT:
+    HIDDEN_SIZE: 512
+    HIDDEN_DROPOUT_PROB: 0.1
+    HIDDEN_ACT: "relu"
+    NUM_ATTENTION_HEADS: 8
+    INTERMEDIATE_SIZE: 2048
+    INTERMEDIATE_DROP: 0.1
+    FFN_DROPOUT_PROB: 0.1
+    ATTENTION_PROBS_DROPOUT_PROB: 0.1
+    NUM_HIDDEN_LAYERS: 3
+    NUM_GENERATION_LAYERS: 3
+
+####################################### Optimizer #######################################
+SOLVER:
+  NAME: 'Adam'
+  EPOCH: 30
+  CHECKPOINT_PERIOD: 1
+  EVAL_PERIOD: 1
+  BASE_LR: 0.0001
+  BIAS_LR_FACTOR: 1.0
+  WEIGHT_DECAY: 0.0
+  WEIGHT_DECAY_NORM: 0.0
+  WEIGHT_DECAY_BIAS: 0.0
+  MOMENTUM: 0.9
+  DAMPENING: 0.0
+  NESTEROV: 0.0
+  BETAS: [0.9, 0.98]
+  EPS: 1.0e-8
+  GRAD_CLIP: 0.1
+  GRAD_CLIP_TYPE: 'value'
+  NORM_TYPE: 2.0
+  WRITE_PERIOD: 20
+
+####################################### lr scheduler ####################################### 
+LR_SCHEDULER:
+  NAME: 'CaptioningLR'
+  STEPS: [10, 12]
+  GAMMA: 0.2
+  WARMUP: 4
+
+####################################### losses ####################################### 
+LOSSES:
+  NAMES: ['CrossEntropy']
+
+####################################### scorer ####################################### 
+SCORER:
+  NAME: 'BaseScorer'
+  TYPES: ['Cider']
+  WEIGHTS: [1.0]
+  GT_PATH: 'datasets/mscoco_dataset/mscoco_train_gts.pkl'
+  CIDER_CACHED: 'datasets/mscoco_dataset/mscoco_train_cider.pkl'
+  EOS_ID: 0
+
+####################################### decode strategy ####################################### 
+DECODE_STRATEGY:
+  NAME: 'EnsembleBeamSearcher'
+  BEAM_SIZE: 5
+
+####################################### evaluation ####################################### 
+INFERENCE:
+  NAME: 'COCOEvaler'
+  VOCAB: 'datasets/mscoco_dataset/vocabulary.txt'
+  ID_KEY: 'image_id'
+  VALUE: 'caption'
+  VAL_ANNFILE: 'datasets/mscoco_dataset/captions_val5k.json'
+  TEST_ANNFILE: 'datasets/mscoco_dataset/captions_test5k.json'
+  GENERATION_MODE: True

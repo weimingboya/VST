@@ -1,0 +1,8 @@
+*.pyc
+.vscode
+__pycache__
+/data
+/datasets
+/checkpoints
+output.log
+/output

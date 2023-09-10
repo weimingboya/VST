@@ -1,0 +1,126 @@
+SEED: 1234
+OUTPUT_DIR : "checkpoints/transformer/ViT-B-32"
+
+####################################### DATASETS #######################################
+DATASETS:
+  TRAIN: 'MSCoCoProDataset'
+  VAL: 'MSCoCoProDataset'
+  TEST: 'MSCoCoProDataset'
+
+###################################### DATALOADER ######################################
+DATALOADER:
+  TRAIN_BATCH_SIZE: 10
+  TEST_BATCH_SIZE: 32
+  NUM_WORKERS: 4
+  GRID_FEATS_PATH: 'datasets/mscoco_dataset/features/COCO2014_ViT-B-32_GLOBAL.hdf5'
+  ANNO_FOLDER:  'datasets/mscoco_dataset'
+  SEQ_PER_SAMPLE:  5
+
+######################################### Engine #########################################
+ENGINE:
+  NAME: 'DefaultTrainer'
+
+######################################### MODEL #########################################
+MODEL:
+  VOCAB_SIZE: 10200 # include <BOS>/<EOS>
+  META_ARCHITECTURE: 'TransformerEncoderDecoder'
+  ENCODER: 'TransformerEncoder'
+  ENCODER_DIM: 512
+  DECODER: 'TransformerDecoder'
+  DECODER_DIM: 512
+  PREDICTOR: 'BasePredictor'
+  PRED_DROPOUT: 0.5
+  MAX_SEQ_LEN: 20
+
+#################################### Token embedding ####################################
+  TOKEN_EMBED:
+    NAME: 'TokenBaseEmbedding'
+    DIM: 512
+    ACTIVATION: 'none'
+    USE_NORM: True
+    DROPOUT: 0.1
+    POSITION: 'SinusoidEncoding'
+
+#################################### Visual embedding ####################################
+  VISUAL_EMBED:
+    NAME: 'VisualBaseEmbedding'
+    IN_DIM: 768
+    OUT_DIM: 512
+    ACTIVATION: 'relu'
+    USE_NORM: True
+    DROPOUT: 0.5
+    
+####################################### BERT ############################################
+  BERT:
+    HIDDEN_SIZE: 512
+    HIDDEN_DROPOUT_PROB: 0.1
+    HIDDEN_ACT: "relu"
+    NUM_ATTENTION_HEADS: 8
+    INTERMEDIATE_SIZE: 2048
+    INTERMEDIATE_DROP: 0.1
+    FFN_DROPOUT_PROB: 0.1
+    ATTENTION_PROBS_DROPOUT_PROB: 0.1
+    NUM_HIDDEN_LAYERS: 3
+    NUM_GENERATION_LAYERS: 3
+  
+####################################### Optimizer #######################################
+SOLVER:
+  NAME: 'Adam'
+  EPOCH: 30
+  CHECKPOINT_PERIOD: 1
+  EVAL_PERIOD: 1
+  BASE_LR: 0.0001
+  BIAS_LR_FACTOR: 1.0
+  WEIGHT_DECAY: 0.0
+  WEIGHT_DECAY_NORM: 0.0
+  WEIGHT_DECAY_BIAS: 0.0
+  MOMENTUM: 0.9
+  DAMPENING: 0.0
+  NESTEROV: 0.0
+  BETAS: [0.9, 0.999]
+  EPS: 1e-8
+  GRAD_CLIP: 0.1
+  GRAD_CLIP_TYPE: 'value'
+  NORM_TYPE: 2.0
+  
+####################################### lr scheduler ####################################### 
+LR_SCHEDULER:
+  # NAME: 'NoamLR'
+  # MODEL_SIZE: 512
+  # FACTOR: 1.0
+  # WARMUP: 10000
+  NAME: 'CaptioningLR'
+  STEPS: [10, 12]
+  GAMMA: 0.2
+  WARMUP: 4
+
+####################################### losses ####################################### 
+LOSSES:
+  # NAMES: ['LabelSmoothing']
+  # LABELSMOOTHING: 0.1
+  NAMES: ['CrossEntropy']
+
+####################################### scorer ####################################### 
+SCORER:
+  NAME: 'BaseScorer'
+  TYPES: ['Cider']
+  WEIGHTS: [1.0]
+  GT_PATH: 'datasets/mscoco_dataset/mscoco_train_gts.pkl'
+  CIDER_CACHED: 'datasets/mscoco_dataset/mscoco_train_cider.pkl'
+  EOS_ID: 0
+
+####################################### decode strategy ####################################### 
+DECODE_STRATEGY:
+  NAME: 'BeamSearcher'
+  BEAM_SIZE: 5
+
+####################################### evaluation ####################################### 
+INFERENCE:
+  NAME: 'COCOEvaler'
+  VOCAB: 'datasets/mscoco_dataset/vocabulary.txt'
+  ID_KEY: 'image_id'
+  VALUE: 'caption'
+  VAL_ANNFILE: 'datasets/mscoco_dataset/captions_val5k.json'
+  TEST_ANNFILE: 'datasets/mscoco_dataset/captions_test5k.json'
+  GENERATION_MODE: True
+

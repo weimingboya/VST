@@ -1,0 +1,47 @@
+_BASE_: "vst.yaml"
+SEED: 211314
+OUTPUT_DIR : "checkpoints/vs_transformer/xe_gpscae_mma_rl_1998_211314"
+
+###################################### DATALOADER ######################################
+DATALOADER:
+  TRAIN_BATCH_SIZE: 10
+
+######################################### Engine #########################################
+ENGINE:
+  NAME: 'RLMeanTrainer'
+
+######################################### MODEL #########################################
+MODEL:
+  # WEIGHTS: 'checkpoints/vs_transformer/xe_pscae_mma/model_Epoch_00013_Iter_0147263.pth'
+  # WEIGHTS: 'checkpoints/vs_transformer/xe_gpscae_mma_3456/model_Epoch_00012_Iter_0135935.pth'
+  WEIGHTS: 'checkpoints/vs_transformer/xe_gpscae_mma_1998/model_Epoch_00010_Iter_0113279.pth'
+  # WEIGHTS: 'checkpoints/vs_transformer/xe_gpscae_mma_211314/model_Epoch_00010_Iter_0113279.pth'
+  # USE_EMA: True
+  # EMA_DECAY: 0.9999
+
+# ####################################### losses ####################################### 
+# LOSSES:
+#   NAMES: ['LabelSmoothing']
+#   LABELSMOOTHING: 0.1
+
+####################################### Optimizer #######################################
+SOLVER:
+  NAME: 'Adam'
+  EPOCH: 20
+  BASE_LR: 0.000005
+  BETAS: [0.9, 0.98]
+  # NAME: 'Adam'
+  # EPOCH: 20
+  # BASE_LR: 0.00001
+
+####################################### lr scheduler #######################################
+LR_SCHEDULER:
+  NAME: 'CaptioningLR'
+  STEPS: [8, 12]
+  GAMMA: 0.2
+  WARMUP: 0
+  # NAME: 'StepLR'
+  # STEP_SIZE: 5
+  # GAMMA: 0.8
+
+
